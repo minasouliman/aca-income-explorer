@@ -4,7 +4,7 @@ A standalone, offline-capable HTML calculator for 2026 KFF Marketplace estimates
 
 Open `dist/index.html` directly in a browser. All styling, calculation code, and 40,562 ZIP records are embedded in that file. No server, build dependencies, account, or network connection is required to use the downloaded page. The hosted copy is private by default.
 
-Defaults: ZIP 77007; two adults aged 35 and 40; one child aged 10; no tobacco use; all three enrolling; income $0–$150,000 in $1,000 steps. Child age is an editable assumption. Use Update plots after editing household or range inputs. Hover/tap plots or use the keyboard-accessible income slider. Monthly/annual premiums, family/individual out-of-pocket ceilings, and series visibility update immediately.
+Defaults: ZIP 77007; two adults aged 35 and 40; one child aged 10; no tobacco use; all three enrolling; income $0–500% FPL in $1,000 steps, plus the exact endpoint ($133,250 for this household). Child age is an editable assumption. Use Update plots after editing household or range inputs. Hover/tap plots or use the keyboard-accessible income slider. Monthly/annual premiums, family/individual out-of-pocket ceilings, and series visibility update immediately.
 
 ## Rebuild and check
 
@@ -15,7 +15,7 @@ node build.mjs
 node test.mjs
 ```
 
-The source is in `src/`. The build embeds `data/rules.json`, `data/zips.json`, and `data/provenance.json`. No package installation is required. `dist/index.html` is the complete distributable.
+The source is in `src/`. The build deduplicates `data/zips.json` into shared records and grouped ZIP references, then embeds that compact lookup with `data/rules.json` and `data/provenance.json`. Raw source data remains unchanged for verification. No package installation is required. `dist/index.html` is the complete distributable.
 
 ## Data and interpretation
 

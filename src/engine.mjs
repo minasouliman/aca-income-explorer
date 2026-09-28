@@ -5,6 +5,9 @@ export function povertyLevel(config, rules, state) {
   const p = parameters(rules, state);
   return p.poverty + (config.people.length + config.otherHousehold - 1) * p.poverty_addition;
 }
+export function withFplRange(config, rules, state) {
+  return {...config,max:5*povertyLevel(config,rules,state)};
+}
 export function calculate(config, record, income, rules) {
   const state = record[4], p = parameters(rules, state);
   const size = config.people.length + config.otherHousehold;

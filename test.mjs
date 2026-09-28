@@ -1,8 +1,9 @@
+import {packZipData,unpackZipData} from './src/zip-data.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
-import {calculate,sweep,povertyLevel} from './src/engine.mjs';
+import {calculate,sweep,povertyLevel,withFplRange} from './src/engine.mjs';
 const rules=JSON.parse(fs.readFileSync('data/rules.json'));
 const zips=JSON.parse(fs.readFileSync('data/zips.json'));
 const person=(age,kind='adult')=>({age,kind,tobacco:false,enrolled:true});
@@ -48,4 +49,15 @@ test('standalone scripts parse; no external runtime assets; element references r
  const html=fs.readFileSync('dist/index.html','utf8');assert.ok(!html.includes('/* APPLICATION */'));assert.ok(!/<script[^>]+src=|<link[^>]+rel="stylesheet"/.test(html));
  for(const [,script] of html.matchAll(/<script>([\s\S]*?)<\/script>/g))new vm.Script(script);
  for(const [,id] of fs.readFileSync('src/app.mjs','utf8').matchAll(/\$\('([^']+)'\)/g))assert.ok(html.includes(`id="${id}"`),`missing ${id}`);
+});
+
+test('compact ZIP lookup round-trips all records and county choices exactly',()=>{
+ const packed=packZipData(zips);assert.equal(packed.records.length,3206);const decoded=unpackZipData(packed);assert.equal(Object.keys(decoded).length,Object.keys(zips).length);for(const [zip,entry] of Object.entries(zips))assert.deepEqual(decoded[zip],entry,zip);assert.ok(JSON.stringify(packed).length<700000);
+});
+test('500% FPL range tracks state and household, preserving the exact last sample',()=>{
+ const c=withFplRange(config,rules,'tx');assert.equal(c.max,133250);const result=sweep(c,tx,rules);assert.equal(result.samples.length,135);assert.equal(result.samples.at(-2),133000);assert.equal(result.samples.at(-1),133250);
+ assert.equal(withFplRange({...config,people:config.people.slice(0,2)},rules,'tx').max,105750);
+ assert.equal(withFplRange({...config,otherHousehold:1},rules,'tx').max,160750);
+ assert.equal(withFplRange(config,rules,'ak').max,166550);
+ assert.equal(withFplRange(config,rules,'hi').max,153250);
 });

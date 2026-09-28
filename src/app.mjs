@@ -26,7 +26,7 @@ function readConfig() {
   return {
     people:[...document.querySelectorAll('.person')].map(row=>({kind:row.dataset.kind,age:Number(row.querySelector('.age').value),tobacco:row.querySelector('.smoker').checked,enrolled:row.querySelector('.enroll').checked})),
     otherHousehold:Number($('other-household').value),employerCoverage:$('employer').checked,
-    min:Number($('income-min').value),max:Number($('income-max').value),step:Number($('income-step').value)
+    min:Number($('income-min').value),step:Number($('income-step').value)
   };
 }
 function updateCounty() {
@@ -48,10 +48,11 @@ function apply() {
     if(!zipEntry) throw new Error('No KFF data for this ZIP code. Check the ZIP and try again.');
     const record=Array.isArray(zipEntry)?zipEntry:zipEntry[$('county').value];
     if(!record||!Number.isFinite(Number(record[0]))||!Number.isFinite(Number(record[1]))) throw new Error('Premium data is unavailable for this county.');
-    const config=readConfig(), data=sweep(config,record,RULES);
+    const config=withFplRange(readConfig(),RULES,record[4]), data=sweep(config,record,RULES);
+    $('income-max').value=config.max;
     active={config,record,...data};
     currentIncome=Math.max(config.min,Math.min(config.max,currentIncome));
-    $('inspect').min=config.min;$('inspect').max=config.max;$('inspect').step=config.step;$('inspect').value=currentIncome;
+    $('inspect').min=0;$('inspect').max=data.samples.length-1;$('inspect').step=1;
     const county=(record[5]||$('county').value).replace(/\b\w/g,c=>c.toUpperCase());
     const location=`${county} County, ${record[4].toUpperCase()} · ${$('zip').value}`;
     $('location').textContent=location;
@@ -90,7 +91,7 @@ function plot(id,series,height,percent=false) {
   const tickCount=width<500?3:6;
   for(let i=0;i<=tickCount;i++){
     const value=xmin+(xmax-xmin)*i/tickCount;
-    svg+=`<text x="${x(value)}" y="${height-22}" text-anchor="${i===tickCount?'end':i===0?'start':'middle'}">${compact(value)}</text>`;
+    svg+=`<text x="${x(value)}" y="${height-22}" text-anchor="${i===tickCount?'end':i===0?'start':'middle'}">${i===tickCount?money(value):compact(value)}</text>`;
   }
   svg+=`<text x="${left+innerWidth/2}" y="${height-3}" text-anchor="middle">Annual household income</text>`;
   let previousLabel=-100;
@@ -131,9 +132,10 @@ function renderCharts() {
 }
 function inspect(income) {
   if(!active)return;
-  currentIncome=Number(income);const row=calculate(active.config,active.record,currentIncome,RULES);
+  const index=active.samples.reduce((best,value,i)=>Math.abs(value-Number(income))<Math.abs(active.samples[best]-Number(income))?i:best,0);
+  currentIncome=active.samples[index];const row=calculate(active.config,active.record,currentIncome,RULES);
   const divisor=Number($('premium-period').value),period=divisor===12?'per month':'per year';
-  $('inspect').value=currentIncome;$('selected-income').textContent=money(currentIncome);
+  $('inspect').value=index;$('inspect').setAttribute('aria-valuetext',money(currentIncome)+' annual income');$('selected-income').textContent=money(currentIncome);
   $('selected-fpl').textContent=`${(row.fpl*100).toFixed(1)}% FPL`;
   const values=[['ACA subsidy',money(row.subsidy/divisor),period,colors.subsidy],['Silver premium',money(row.silver/divisor),period,colors.silver],['Bronze premium',money(row.bronze==null?null:row.bronze/divisor),period,colors.bronze],['Silver OOP ceiling',money(row[$('oop-scope').value]),$('oop-scope').value==='familyOOP'?'family / year':'person / year',colors.oop],['Silver AV',row.silverAV+'%','Bronze: '+(row.bronzeAV==null?'unavailable':row.bronzeAV+'%'),colors.silver]];
   $('metrics').innerHTML=values.map(([label,value,unit,color])=>`<div class="metric" style="--color:${color}"><span class="metric-label">${label}</span><span class="metric-value">${value}</span><span class="metric-unit">${unit}</span></div>`).join('');
@@ -148,7 +150,7 @@ $('controls').addEventListener('submit',event=>{event.preventDefault();apply();}
 $('controls').addEventListener('input',()=>{$('form-status').textContent='Changes pending — update plots to apply.';});
 $('adult-count').addEventListener('change',renderPeople);$('child-count').addEventListener('change',renderPeople);
 $('zip').addEventListener('input',updateCounty);
-$('inspect').addEventListener('input',event=>inspect(event.target.value));
+$('inspect').addEventListener('input',event=>inspect(active.samples[Number(event.target.value)]));
 $('premium-period').addEventListener('change',renderCharts);$('oop-scope').addEventListener('change',renderCharts);
 $('data-note').textContent=`${PROVENANCE.zipCount.toLocaleString()} ZIP codes bundled. KFF data retrieved ${PROVENANCE.retrieved}. The page works offline; source links require internet.`;
 renderPeople();apply();

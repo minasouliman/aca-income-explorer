@@ -1,10 +1,14 @@
 import fs from 'node:fs';
+import {packZipData} from './src/zip-data.mjs';
 const source=fs.readFileSync('src/index.html','utf8');
 const rules=JSON.parse(fs.readFileSync('data/rules.json','utf8'));
 const zips=JSON.parse(fs.readFileSync('data/zips.json','utf8'));
 const provenance=JSON.parse(fs.readFileSync('data/provenance.json','utf8'));
 const safe=value=>JSON.stringify(value).replaceAll('<','\\u003c');
-const data=`const RULES=${safe(rules)};const ZIP_DATA=${safe(zips)};const PROVENANCE=${safe(provenance)};`;
+const packed=packZipData(zips);
+const zipHelpers=fs.readFileSync('src/zip-data.mjs','utf8');
+const decoder=zipHelpers.slice(zipHelpers.indexOf('export function unpackZipData')).replace('export function','function');
+const data=`${decoder}\nconst RULES=${safe(rules)};const ZIP_DATA=unpackZipData(${safe(packed)});const PROVENANCE=${safe(provenance)};`;
 const application=fs.readFileSync('src/engine.mjs','utf8').replaceAll('export function','function')+'\n'+fs.readFileSync('src/app.mjs','utf8');
 fs.mkdirSync('dist',{recursive:true});
 fs.writeFileSync('dist/index.html',source.replace('/* STYLES */',()=>fs.readFileSync('src/styles.css','utf8')).replace('/* DATA */',()=>data).replace('/* APPLICATION */',()=>application));
