@@ -1,0 +1,12 @@
+{
+  "year": 2026,
+  "retrieved": "2026-09-28",
+  "source": "https://files.kff.org/subsidy-calculator/2026/production/data/{prefix}.json",
+  "zipCount": 40562,
+  "unavailablePrefixes": [
+    [
+      "09",
+      "HTTP Error 403: Forbidden"
+    ]
+  ]
+}

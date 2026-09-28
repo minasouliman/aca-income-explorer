@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+const source=fs.readFileSync('src/index.html','utf8');
+const rules=JSON.parse(fs.readFileSync('data/rules.json','utf8'));
+const zips=JSON.parse(fs.readFileSync('data/zips.json','utf8'));
+const provenance=JSON.parse(fs.readFileSync('data/provenance.json','utf8'));
+const safe=value=>JSON.stringify(value).replaceAll('<','\\u003c');
+const data=`const RULES=${safe(rules)};const ZIP_DATA=${safe(zips)};const PROVENANCE=${safe(provenance)};`;
+const application=fs.readFileSync('src/engine.mjs','utf8').replaceAll('export function','function')+'\n'+fs.readFileSync('src/app.mjs','utf8');
+fs.mkdirSync('dist',{recursive:true});
+fs.writeFileSync('dist/index.html',source.replace('/* STYLES */',()=>fs.readFileSync('src/styles.css','utf8')).replace('/* DATA */',()=>data).replace('/* APPLICATION */',()=>application));
+const manifestPath='.openai/hosting.json';
+const manifest=fs.existsSync(manifestPath)?JSON.parse(fs.readFileSync(manifestPath,'utf8')):{};
+fs.writeFileSync(manifestPath,JSON.stringify({...manifest,static:{directory:'dist'}},null,2));
+console.log(`Built standalone HTML: ${fs.statSync('dist/index.html').size.toLocaleString()} bytes; ${Object.keys(zips).length} ZIPs.`);
