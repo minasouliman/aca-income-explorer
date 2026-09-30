@@ -2,7 +2,7 @@
 
 A standalone, offline-capable HTML calculator for 2026 KFF Marketplace estimates.
 
-Open `dist/index.html` directly in a browser. All styling, calculation code, and 40,561 KFF ZIP records and CMS deductible and OOP aggregates for 22,268 ZIPs are embedded in that file. No server, build dependencies, account, or network connection is required to use the downloaded page. This project is local-only. Open the HTML directly; no deployment is needed.
+Open `dist/index.html` directly in a browser. All styling, calculation code, and 40,561 KFF ZIP records and CMS deductible and OOP aggregates for 22,268 ZIPs are embedded in that file. No server, build dependencies, account, or network connection is required to use the downloaded page.
 
 Defaults: ZIP 77007; two adults aged 35 and 40; one child aged 10; no tobacco use; enrollment determined automatically at each income; income 100–500% FPL in fixed $1,000 steps from the lower bound, plus the exact endpoint ($26,650–$133,250 for this household). The income bounds and increment are automatic and have no input controls. Child age is an editable assumption. Plots update automatically as valid household inputs change; incomplete or invalid edits retain the last valid plots with an inline message. Hover/tap plots or use the keyboard-accessible income slider. The monthly/annual selector is in the input panel; display units and series visibility update immediately.
 
@@ -15,7 +15,11 @@ node build.mjs
 npm test
 ```
 
-The source is in `src/`. The build deduplicates `data/zips.json` into shared records and grouped ZIP references, then embeds that compact lookup with `data/rules.json` and `data/provenance.json`. Raw source data remains unchanged for verification. No package installation is required. `dist/index.html` is the complete distributable.
+The source is in `src/`. The build deduplicates `data/zips.json` into shared records and grouped ZIP references, then embeds that compact lookup with `data/rules.json` and `data/provenance.json`. Raw source data remains unchanged for verification. No package installation is required. The build writes identical standalone pages to `dist/index.html` for local use and `docs/index.html` for GitHub Pages.
+
+## GitHub Pages
+
+In the repository's Settings → Pages, choose **Deploy from a branch**, then **main** and **/docs**, and save. GitHub Pages only offers the repository root or `/docs` for branch publishing. Rebuild and commit `docs/index.html` after source changes. The Pages website is public even when this repository is private; publishing from a private repository also depends on the GitHub account's plan.
 
 ## Data and interpretation
 
