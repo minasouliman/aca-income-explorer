@@ -2,11 +2,14 @@
   "year": 2026,
   "retrieved": "2026-09-28",
   "source": "https://files.kff.org/subsidy-calculator/2026/production/data/{prefix}.json",
-  "zipCount": 40562,
+  "zipCount": 40561,
   "unavailablePrefixes": [
     [
       "09",
-      "HTTP Error 403: Forbidden"
+      "HTTP 403"
     ]
-  ]
+  ],
+  "rulesSource": "https://files.kff.org/subsidy-calculator/2026/production/combined.js",
+  "rulesSha256": "8adc76944eec80610071d0672bb0715e399c64512958b141adb2fd2d2514930a",
+  "logicHash": "543ddd87bff1ad4c40ad1d3b8abc30dcd823432ef402574f3c0ff4664c312569"
 }

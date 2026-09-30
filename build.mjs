@@ -1,18 +1,21 @@
 import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {packZipData} from './src/zip-data.mjs';
-const source=fs.readFileSync('src/index.html','utf8');
-const rules=JSON.parse(fs.readFileSync('data/rules.json','utf8'));
-const zips=JSON.parse(fs.readFileSync('data/zips.json','utf8'));
-const provenance=JSON.parse(fs.readFileSync('data/provenance.json','utf8'));
-const safe=value=>JSON.stringify(value).replaceAll('<','\\u003c');
-const packed=packZipData(zips);
-const zipHelpers=fs.readFileSync('src/zip-data.mjs','utf8');
-const decoder=zipHelpers.slice(zipHelpers.indexOf('export function unpackZipData')).replace('export function','function');
-const data=`${decoder}\nconst RULES=${safe(rules)};const ZIP_DATA=unpackZipData(${safe(packed)});const PROVENANCE=${safe(provenance)};`;
-const application=fs.readFileSync('src/engine.mjs','utf8').replaceAll('export function','function')+'\n'+fs.readFileSync('src/app.mjs','utf8');
-fs.mkdirSync('dist',{recursive:true});
-fs.writeFileSync('dist/index.html',source.replace('/* STYLES */',()=>fs.readFileSync('src/styles.css','utf8')).replace('/* DATA */',()=>data).replace('/* APPLICATION */',()=>application));
-const manifestPath='.openai/hosting.json';
-const manifest=fs.existsSync(manifestPath)?JSON.parse(fs.readFileSync(manifestPath,'utf8')):{};
-fs.writeFileSync(manifestPath,JSON.stringify({...manifest,static:{directory:'dist'}},null,2));
-console.log(`Built standalone HTML: ${fs.statSync('dist/index.html').size.toLocaleString()} bytes; ${Object.keys(zips).length} ZIPs.`);
+const root=path.dirname(fileURLToPath(import.meta.url));
+const read=file=>fs.readFileSync(path.join(root,file),'utf8');
+export function renderPage({rules,zips,provenance,cms=JSON.parse(read('data/cms-deductibles.json'))}) {
+  const source=read('src/index.html');
+  const safe=value=>JSON.stringify(value).replaceAll('<','\\u003c');
+  const zipHelpers=read('src/zip-data.mjs');
+  const decoder=zipHelpers.slice(zipHelpers.indexOf('export function unpackZipData')).replace('export function','function');
+  const data=`${decoder}\nconst RULES=${safe(rules)};const ZIP_DATA=unpackZipData(${safe(packZipData(zips))});const PROVENANCE=${safe(provenance)};const CMS_DATA=${safe(cms)};`;
+  const application=read('src/cms-data.mjs').replaceAll('export function','function')+'\n'+read('src/engine.mjs').replaceAll('export function','function')+'\n'+read('src/app.mjs');
+  return source.replace('/* STYLES */',()=>read('src/styles.css')).replace('/* DATA */',()=>data).replace('/* APPLICATION */',()=>application);
+}
+if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
+  const rules=JSON.parse(read('data/rules.json')),zips=JSON.parse(read('data/zips.json')),provenance=JSON.parse(read('data/provenance.json'));
+  fs.mkdirSync(path.join(root,'dist'),{recursive:true});
+  const html=renderPage({rules,zips,provenance});fs.writeFileSync(path.join(root,'dist/index.html'),html);
+  console.log(`Built local standalone HTML: ${Buffer.byteLength(html).toLocaleString()} bytes; ${Object.keys(zips).filter(zip=>/^\d{5}$/.test(zip)).length} ZIPs. No upload or deployment.`);
+}

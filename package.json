@@ -1,1 +1,10 @@
-{"name":"aca-income-explorer","private":true,"type":"module","scripts":{"build":"node build.mjs","test":"node --test test.mjs"}}
+{
+  "name": "aca-income-explorer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test test.mjs scripts/kff-source.test.mjs scripts/cms-data.test.mjs && python3 -m unittest discover -s scripts -p \"test_*.py\"",
+    "update-data": "node scripts/update-kff.mjs"
+  }
+}
